@@ -24,7 +24,12 @@ Describe 'TestLoading' {
     It 'Meta Default Module was not created' {
         $availableModules = Get-EnvironmentModule -ListAvailable | Select-Object -Expand FullName
         'Project' | Should -Not -BeIn $availableModules
-    }        
+    }    
+    
+    It 'Module should not exist twice' {
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "NotepadPlusPlus-x64"
+        $availableModules.Length | Should -Be 1
+    }    
 
     Import-EnvironmentModule 'NotepadPlusPlus'
 
@@ -229,11 +234,25 @@ Describe 'TestGet' {
     Import-EnvironmentModule 'Project-ProgramA'
 
     It 'Correct style version is returned' {
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "Project-ProgramA" 
+        $module = Get-EnvironmentModule -ModuleFullName "Project-ProgramA" 
         ($module.StyleVersion) | Should -Be 2
     }
 
     Remove-EnvironmentModule 'Project-ProgramA'
+}
+
+Describe 'TestCircularDependencies' {
+    Import-EnvironmentModule 'DependencyBase'
+
+    It 'Module was not loaded' {
+        try {
+            $modules = Get-EnvironmentModule -ModuleFullName "Dependency*"      
+        }
+        catch {
+        }
+
+        $modules | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'TestFunctionStack' {
