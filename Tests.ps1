@@ -2,9 +2,15 @@ if($null -eq (Get-Module -Name "Pester")) {
     Import-Module Pester
 }
 
-. "$PSScriptRoot\..\EnvironmentModules\Samples\StartSampleEnvironment.ps1" -AdditionalModulePaths @("$PSScriptRoot\Modules") -TempDirectory "$PSScriptRoot\Tmp" -ConfigDirectory "$PSScriptRoot\Config"
+. "$env:ENVIRONMENT_MODULE_ROOT\Samples\StartSampleEnvironment.ps1" -AdditionalModulePaths @("$PSScriptRoot\Modules") -TempDirectory "$PSScriptRoot\Tmp" -ConfigDirectory "$PSScriptRoot\Config"
 
 Describe 'TestLoading' {
+
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
 
     It 'Main module was loaded' {
         $loadedModules = Get-Module | Select-Object -Expand Name
@@ -31,110 +37,117 @@ Describe 'TestLoading' {
         $availableModules.Length | Should -Be 1
     }    
 
-    Import-EnvironmentModule 'NotepadPlusPlus'
-
     It 'Meta-Module is unloaded directly' {
+        Import-EnvironmentModule 'NotepadPlusPlus'
         $metaModule = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "NotepadPlusPlus"
         $metaModule | Should -BeNullOrEmpty
     }
 
     It 'Module is loaded correctly' {
+        Import-EnvironmentModule 'NotepadPlusPlus'
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "NotepadPlusPlus-x64"
         $module | Should -Not -BeNullOrEmpty
     }
 
     It 'Dependency was loaded correctly' {
+        Import-EnvironmentModule 'NotepadPlusPlus'
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Aspell-2_1-x86"
         $module | Should -Not -BeNullOrEmpty
     }
 
-    Remove-EnvironmentModule 'NotepadPlusPlus-x64'
-
     It 'Module can be removed with dependencies' {
+        Import-EnvironmentModule 'NotepadPlusPlus'
+        Remove-EnvironmentModule 'NotepadPlusPlus-x64'
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty   
     }   
+
+    It 'Project Module can be removed with dependencies' {
+        Import-EnvironmentModule 'Project-ProgramA'
+        Remove-EnvironmentModule 'Project-ProgramA'
+        $module = Get-EnvironmentModule
+        $module | Should -BeNullOrEmpty   
+    }     
 }
 
 Describe 'TestLoading_CustomPath_Directory' {
-    Clear-EnvironmentModuleSearchPaths -Force
-    $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
-    Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
 
-    Import-EnvironmentModule "Project-ProgramB"
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -Force
+        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
+        Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
+        Import-EnvironmentModule "Project-ProgramB"
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }    
+
     It 'Module is loaded correctly' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
         $module | Should -Not -BeNullOrEmpty
-    }
-
-    Remove-EnvironmentModule 'Project-ProgramB'
-
-    It 'Module can be removed with dependencies' {
-        $module = Get-EnvironmentModule
-        $module | Should -BeNullOrEmpty   
-    }       
+    }  
 }
 
 Describe 'TestLoading_CustomPath_Environment' {
-    Clear-EnvironmentModuleSearchPaths -Force
-    $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
-    $env:TESTLADOING_PATH = "$customDirectory"
-    Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
-    Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
 
-    Import-EnvironmentModule "Project-ProgramB"
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -Force
+        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
+        $env:TESTLADOING_PATH = "$customDirectory"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
+        Import-EnvironmentModule "Project-ProgramB"
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }       
+
     It 'Module is loaded correctly' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
         $module | Should -Not -BeNullOrEmpty
     }
 
-    $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
-
     It 'SearchPath correctly returned' {
+        $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
         $searchPaths.Count | Should -Be 2
         $searchPaths[0].Key | Should -Be "TESTLADOING_PATH"
     } 
 
     It 'Remove Search Path works correctly' {
-        # Remove-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" #For Manual Testing
         Remove-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Key "UNDEFINED_VARIABLE"
         $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
         $searchPaths.Count | Should -Be 1
     }     
-
-    Remove-EnvironmentModule 'Project-ProgramB'
-
-    It 'Module can be removed with dependencies' {
-        $module = Get-EnvironmentModule
-        $module | Should -BeNullOrEmpty   
-    }       
 }
 
 Describe 'TestLoading_Environment_Subpath' {
-    Clear-EnvironmentModuleSearchPaths -Force
-    $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramC"
-    $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -Force
+        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramC"
+        $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
+        Import-EnvironmentModule "Project-ProgramC"        
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    } 
 
-    Import-EnvironmentModule "Project-ProgramC"
     It 'Module is loaded correctly with sub-path' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramC"
         $module | Should -Not -BeNullOrEmpty
-    }
-
-    Remove-EnvironmentModule 'Project-ProgramC'
-
-    It 'Module can be removed with dependencies' {
-        $module = Get-EnvironmentModule
-        $module | Should -BeNullOrEmpty   
-    }       
+    }    
 }
 
 Describe 'TestLoading_InvalidCustomPath' {
-    Clear-EnvironmentModuleSearchPaths -Force
-    $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB_"
-    Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -Force
+        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB_"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
+        Import-EnvironmentModule "Project-ProgramB"     
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }     
 
-    Import-EnvironmentModule "Project-ProgramB"
     It 'Module should not be loaded because of invalid root path' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
         $module | Should -BeNullOrEmpty
@@ -142,19 +155,24 @@ Describe 'TestLoading_InvalidCustomPath' {
 }
 
 Describe 'TestLoading_AbstractModule' {
-    try {
-        Import-EnvironmentModule 'Abstract-Project'
+    BeforeEach {  
+        Import-EnvironmentModule "Project-ProgramA"          
     }
-    catch {
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }      
 
-    }
-
-    It 'Modules was not loaded' {   
+    It 'Modules was not loaded' { 
+        Clear-EnvironmentModules -Force
+        try {
+            Import-EnvironmentModule 'Abstract-Project'
+        }
+        catch {
+        }         
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "Abstract-Project" 
         $module | Should -BeNullOrEmpty 
     }
     
-    Import-EnvironmentModule "Project-ProgramA"
     It 'Module is loaded correctly' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramA"
         $module | Should -Not -BeNullOrEmpty
@@ -169,17 +187,15 @@ Describe 'TestLoading_AbstractModule' {
         $result = Get-ProjectRoot  # Call function of abstract module
         $result | Should -BeExactly "C:\Temp"
     }       
-
-    Remove-EnvironmentModule 'Project-ProgramA'
-
-    It 'Module can be removed with dependencies' {
-        $module = Get-EnvironmentModule
-        $module | Should -BeNullOrEmpty   
-    }   
-
 }
 
 Describe 'TestCopy' {
+    BeforeEach {          
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }  
+
     It 'Modules was correctly copied and deleted afterwards' {   
         $module = Get-EnvironmentModule -ListAvailable "Project-ProgramA"
         $module | Should -Not -BeNullOrEmpty 
@@ -198,7 +214,12 @@ Describe 'TestCopy' {
 }
 
 Describe 'TestSwitch' {
-    Import-EnvironmentModule 'Project-ProgramA'
+    BeforeEach {         
+        Import-EnvironmentModule 'Project-ProgramA' 
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }     
 
     It 'Modules were loaded correctly' {   
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "NotepadPlusPlus-x86" 
@@ -221,28 +242,29 @@ Describe 'TestSwitch' {
         $result = Start-Cmd 42
         $result | Should -BeExactly 42
     }
-
-    Remove-EnvironmentModule 'Project-ProgramA'
-
-    It 'Meta Module can be removed with dependencies' {
-        $module = Get-EnvironmentModule
-        $module | Should -BeNullOrEmpty   
-    }
 }
 
 Describe 'TestGet' {
-    Import-EnvironmentModule 'Project-ProgramA'
+    BeforeEach {         
+        Import-EnvironmentModule 'Project-ProgramA' 
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
 
     It 'Correct style version is returned' {
         $module = Get-EnvironmentModule -ModuleFullName "Project-ProgramA" 
         ($module.StyleVersion) | Should -Be 2
     }
-
-    Remove-EnvironmentModule 'Project-ProgramA'
 }
 
 Describe 'TestCircularDependencies' {
-    Import-EnvironmentModule 'DependencyBase'
+    BeforeEach {         
+        Import-EnvironmentModule 'DependencyBase' 
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
 
     It 'Module was not loaded' {
         try {
@@ -255,16 +277,35 @@ Describe 'TestCircularDependencies' {
     }
 }
 
-Describe 'TestFunctionStack' {
-    Import-EnvironmentModule 'Project-ProgramA'
+Describe 'TestAlias' {
+    BeforeEach {         
+        Import-EnvironmentModule 'NotepadPlusPlus' 
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
 
-    $knownFunctions = Get-EnvironmentModuleFunctionModules "Start-Cmd"
+    It 'Alias npp is loaded correctly' {
+        $aliasInfos = Get-EnvironmentModuleAlias -ModuleFullName "NotepadPlusPlus*" 
+        $aliasInfos.Length | Should -Be 1
+        $aliasInfos[0].Name | Should -Be "npp"
+    }
+}
+
+Describe 'TestFunctionStack' {
+    BeforeEach {         
+        Import-EnvironmentModule 'Project-ProgramA' 
+    }    
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }    
 
     It 'Function Stack has correct structure' {
+        $knownFunctions = Get-EnvironmentModuleFunction -FunctionName "Start-Cmd"
         $knownFunctions | Should -HaveCount 2
 
-        $knownFunctions[0] | Should -Be "Cmd"
-        $knownFunctions[1] | Should -Be "Project-ProgramA"
+        $knownFunctions[0].ModuleFullName | Should -Be "Cmd"
+        $knownFunctions[1].ModuleFullName | Should -Be "Project-ProgramA"
     }
 
     It 'Function Stack invoke does work correctly' {
