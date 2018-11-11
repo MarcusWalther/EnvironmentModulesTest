@@ -319,5 +319,9 @@ Describe 'TestFunctionStack' {
         $result | Should -Be 45 
     }
 
-    Remove-EnvironmentModule 'Project-ProgramA'
+    It 'Function Stack cleaned correctly' {
+        Remove-EnvironmentModule 'Project-ProgramA'
+        $knownFunctions = Get-EnvironmentModuleFunction -FunctionName "Start-Cmd"
+        $knownFunctions | Should -HaveCount 0
+    }
 }
