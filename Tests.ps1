@@ -2,7 +2,14 @@ if($null -eq (Get-Module -Name "Pester")) {
     Import-Module Pester
 }
 
-. "$env:ENVIRONMENT_MODULE_ROOT\Samples\StartSampleEnvironment.ps1" -AdditionalModulePaths @("$PSScriptRoot\Modules") -TempDirectory "$PSScriptRoot\Tmp" -ConfigDirectory "$PSScriptRoot\Config"
+# The directories and scripts to use
+$additionalModulesPath = Join-Path $PSScriptRoot "Modules"
+$tempDirectory = Join-Path $PSScriptRoot "Tmp"
+$configDirectory = Join-Path $PSScriptRoot "Config"
+$startEnvironmentScript = Join-Path $env:ENVIRONMENT_MODULE_ROOT (Join-Path "Samples" "StartSampleEnvironment.ps1")
+
+# Prepare the environment
+. $startEnvironmentScript -AdditionalModulePaths $additionalModulesPath -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
 
 Describe 'TestLoading' {
 
@@ -18,7 +25,7 @@ Describe 'TestLoading' {
     }
 
     It 'Default Modules were created' {
-        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "NotepadPlusPlus"
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramD"
         $availableModules.Length | Should -Be 1
     }
 
@@ -33,38 +40,38 @@ Describe 'TestLoading' {
     }    
     
     It 'Module should not exist twice' {
-        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "NotepadPlusPlus-x64"
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramD-x64"
         $availableModules.Length | Should -Be 1
     }    
 
     It 'Meta-Module is unloaded directly' {
-        Import-EnvironmentModule 'NotepadPlusPlus'
-        $metaModule = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "NotepadPlusPlus"
+        Import-EnvironmentModule 'ProgramD'
+        $metaModule = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD"
         $metaModule | Should -BeNullOrEmpty
     }
 
     It 'Module is loaded correctly' {
-        Import-EnvironmentModule 'NotepadPlusPlus'
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "NotepadPlusPlus-x64"
+        Import-EnvironmentModule 'ProgramD'
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x64"
         $module | Should -Not -BeNullOrEmpty
     }
 
     It 'Dependency was loaded correctly' {
-        Import-EnvironmentModule 'NotepadPlusPlus'
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Aspell-2_1-x86"
+        Import-EnvironmentModule 'ProgramE'
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x64"
         $module | Should -Not -BeNullOrEmpty
     }
 
     It 'Module can be removed with dependencies' {
-        Import-EnvironmentModule 'NotepadPlusPlus'
-        Remove-EnvironmentModule 'NotepadPlusPlus-x64'
+        Import-EnvironmentModule 'ProgramD'
+        Remove-EnvironmentModule 'ProgramD-x64'
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty   
     }   
 
     It 'Project Module can be removed with dependencies' {
-        Import-EnvironmentModule 'Project-ProgramA'
-        Remove-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'ProgramE'
+        Remove-EnvironmentModule 'ProgramE-x64'
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty   
     }     
@@ -74,7 +81,7 @@ Describe 'TestLoading_CustomPath_Directory' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
+        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB"
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
         Import-EnvironmentModule "Project-ProgramB"
     }
@@ -92,7 +99,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB"
+        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB"
         $env:TESTLADOING_PATH = "$customDirectory"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
@@ -123,7 +130,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 Describe 'TestLoading_Environment_Subpath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramC"
+        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramC"
         $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
         Import-EnvironmentModule "Project-ProgramC"        
     }
@@ -140,7 +147,7 @@ Describe 'TestLoading_Environment_Subpath' {
 Describe 'TestLoading_InvalidCustomPath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules\Project-ProgramB_"
+        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB_"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
         Import-EnvironmentModule "Project-ProgramB"     
     }
@@ -222,19 +229,16 @@ Describe 'TestSwitch' {
     }     
 
     It 'Modules were loaded correctly' {   
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "NotepadPlusPlus-x86" 
-        $module | Should -Not -BeNullOrEmpty 
-
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "Cmd*" 
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "ProgramD-x64" 
         $module | Should -Not -BeNullOrEmpty 
     }
 
     It 'Switch module works' {
-        Switch-EnvironmentModule 'NotepadPlusPlus-x86' 'NotepadPlusPlus-x64'
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "NotepadPlusPlus-x86" 
+        Switch-EnvironmentModule 'ProgramD-x64' 'ProgramD-x86'
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "ProgramD-x64" 
         $module | Should -BeNullOrEmpty 
 
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "NotepadPlusPlus-x64" 
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "ProgramD-x86" 
         $module | Should -Not -BeNullOrEmpty         
     }
 
@@ -279,16 +283,16 @@ Describe 'TestCircularDependencies' {
 
 Describe 'TestAlias' {
     BeforeEach {         
-        Import-EnvironmentModule 'NotepadPlusPlus' 
+        Import-EnvironmentModule 'ProgramD-x64' 
     }    
     AfterEach {
         Clear-EnvironmentModules -Force
     }
 
-    It 'Alias npp is loaded correctly' {
-        $aliasInfos = Get-EnvironmentModuleAlias -ModuleFullName "NotepadPlusPlus*" 
+    It 'Alias ppp is loaded correctly' {
+        $aliasInfos = Get-EnvironmentModuleAlias -ModuleFullName "ProgramD*" 
         $aliasInfos.Length | Should -Be 1
-        $aliasInfos[0].Name | Should -Be "npp"
+        $aliasInfos[0].Name | Should -Be "ppp"
     }
 }
 
@@ -304,7 +308,7 @@ Describe 'TestFunctionStack' {
         $knownFunctions = Get-EnvironmentModuleFunction -FunctionName "Start-Cmd"
         $knownFunctions | Should -HaveCount 2
 
-        $knownFunctions[0].ModuleFullName | Should -Be "Cmd"
+        $knownFunctions[0].ModuleFullName | Should -Be "ProgramD-x64"
         $knownFunctions[1].ModuleFullName | Should -Be "Project-ProgramA"
     }
 
@@ -315,8 +319,8 @@ Describe 'TestFunctionStack' {
         $result = Start-Cmd "42"
         $result | Should -Be 42     
         
-        $result = Invoke-EnvironmentModuleFunction "Start-Cmd" "Cmd" -ArgumentList '/C "echo 45"'
-        $result | Should -Be 45 
+        $result = Invoke-EnvironmentModuleFunction "Start-Cmd" "ProgramD-x64" -ArgumentList '/C "echo 45"'
+        $result | Should -Be @('/C "echo 45"', "something")
     }
 
     It 'Function Stack cleaned correctly' {
