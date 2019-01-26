@@ -3,13 +3,17 @@ if($null -eq (Get-Module -Name "Pester")) {
 }
 
 # The directories and scripts to use
-$additionalModulesPath = Join-Path $PSScriptRoot "Modules"
+$modulesRootFolder = Join-Path $PSScriptRoot "Modules"
+
+$additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $modulesRootFolder))
+
 $tempDirectory = Join-Path $PSScriptRoot "Tmp"
 $configDirectory = Join-Path $PSScriptRoot "Config"
 $startEnvironmentScript = Join-Path $env:ENVIRONMENT_MODULE_ROOT (Join-Path "Samples" "StartSampleEnvironment.ps1")
 
 # Prepare the environment
-. $startEnvironmentScript -AdditionalModulePaths $additionalModulesPath -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
+. $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
+Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $modulesRootFolder
 
 Describe 'TestLoading' {
 
@@ -81,7 +85,7 @@ Describe 'TestLoading_CustomPath_Directory' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB"
+        $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
         Import-EnvironmentModule "Project-ProgramB"
     }
@@ -99,7 +103,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB"
+        $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         $env:TESTLADOING_PATH = "$customDirectory"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
@@ -130,7 +134,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 Describe 'TestLoading_Environment_Subpath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramC"
+        $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramC")
         $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
         Import-EnvironmentModule "Project-ProgramC"
     }
@@ -147,7 +151,7 @@ Describe 'TestLoading_Environment_Subpath' {
 Describe 'TestLoading_InvalidCustomPath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $PSScriptRoot "Modules/Project-ProgramB_"
+        $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB_")
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
         Import-EnvironmentModule "Project-ProgramB"
     }
@@ -206,7 +210,7 @@ Describe 'TestCopy' {
     It 'Modules was correctly copied and deleted afterwards' {
         $module = Get-EnvironmentModule -ListAvailable "Project-ProgramA"
         $module | Should -Not -BeNullOrEmpty
-        Copy-EnvironmentModule Project-ProgramA "Project-ProgramACopy" (Resolve-Path (Join-Path $PSScriptRoot 'Modules'))
+        Copy-EnvironmentModule Project-ProgramA "Project-ProgramACopy"
         $newModule = Get-EnvironmentModule -ListAvailable "Project-ProgramACopy"
         $newModule | Should -Not -BeNullOrEmpty
 
@@ -258,7 +262,7 @@ Describe 'TestGet' {
 
     It 'Correct style version is returned' {
         $module = Get-EnvironmentModule -ModuleFullName "Project-ProgramA"
-        ($module.StyleVersion) | Should -Be 2
+        ($module.StyleVersion) | Should -Be 2.1
     }
 }
 
