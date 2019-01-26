@@ -18,8 +18,11 @@
     DirectUnload = $false
 
     # The version of the description files
-    StyleVersion = 2.0
+    StyleVersion = 2.1
 
     # Required files that must be part of the folder candidate
-    RequiredFiles = @("File.txt")    
+    RequiredFiles = @("File.txt")
+
+    # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
+    Category = "Project"
 }

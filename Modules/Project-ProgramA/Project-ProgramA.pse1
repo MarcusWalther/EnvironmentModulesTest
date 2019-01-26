@@ -9,7 +9,7 @@
 
 @{
     # Environment Modules that must be imported into the global environment prior importing this module
-    RequiredEnvironmentModules = @("Abstract-Project", "ProgramD-x64")
+    RequiredEnvironmentModules = @("Abstract-Project", "ProgramD")
 
     # The type of the module, either "Default" or "Meta" if it is a project-module
     ModuleType = "Meta"
@@ -18,5 +18,8 @@
     DirectUnload = $false
 
     # The version of the description files
-    StyleVersion = 2.0
+    StyleVersion = 2.1
+
+    # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
+    Category = "Project"
 }
