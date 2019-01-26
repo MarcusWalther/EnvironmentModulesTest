@@ -333,3 +333,33 @@ Describe 'TestFunctionStack' {
         $knownFunctions | Should -HaveCount 0
     }
 }
+
+Describe 'TestParameters' {
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Default Parameters are loaded correctly' {
+        Import-EnvironmentModule 'ProgramE-x64'
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter1") | Should -Be "Default"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter2") | Should -Be "Default"
+    }
+
+    It 'Parameters are overwritten correctly' {
+        Import-EnvironmentModule 'Project-ProgramA'
+        (Get-EnvironmentModuleParameter "ProgramD.Parameter1") | Should -Be "ProjectValue"
+    }
+
+    It 'Modules can access the Parameters' {
+        Import-EnvironmentModule 'Project-ProgramA'
+        Get-ProjectValue | Should -Be "ProjectValue"
+    }
+
+    It 'Module has a valid temp directory' {
+        Import-EnvironmentModule 'Project-ProgramA'
+        $loadedModules = Get-EnvironmentModule
+        $loadedModules | ForEach-Object { (Test-Path $_.TmpDirectory) | Should -Be $True }
+    }
+}
