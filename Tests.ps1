@@ -79,6 +79,11 @@ Describe 'TestLoading' {
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty
     }
+
+    It 'Clear does work correctly' {
+        Import-EnvironmentModule 'Project-ProgramA'
+        Clear-EnvironmentModules -Force | Should -Be $null
+    }
 }
 
 Describe 'TestLoading_CustomPath_Directory' {
@@ -297,6 +302,7 @@ Describe 'TestAlias' {
         $aliasInfos = Get-EnvironmentModuleAlias -ModuleFullName "ProgramD*"
         $aliasInfos.Length | Should -Be 1
         $aliasInfos[0].Name | Should -Be "ppp"
+        $aliasInfos[0].Description | Should -Be "Use 'ppp' to start ProgramD"
     }
 }
 
@@ -345,6 +351,11 @@ Describe 'TestParameters' {
         Import-EnvironmentModule 'ProgramE-x64'
         (Get-EnvironmentModuleParameter "ProgramE.Parameter1") | Should -Be "Default"
         (Get-EnvironmentModuleParameter "ProgramE.Parameter2") | Should -Be "Default"
+    }
+
+    It 'Parameter can be accessed correctly' {
+        Import-EnvironmentModule 'ProgramE-x64'
+        Get-EnvironmentModuleParameters "*" | Select-Object -ExpandProperty "Parameter" | Should -Contain "ProgramE.Parameter1"
     }
 
     It 'Parameters are overwritten correctly' {
