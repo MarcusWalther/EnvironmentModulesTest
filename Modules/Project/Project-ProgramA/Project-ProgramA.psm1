@@ -11,5 +11,5 @@ $Module.AddFunction("Start-Cmd", {
 })
 
 $Module.AddFunction("Get-ProjectValue", {
-	return Get-EnvironmentModuleParameter "ProgramD.Parameter1"
+	return (Get-EnvironmentModuleParameter "ProgramD.Parameter1").Value
 })

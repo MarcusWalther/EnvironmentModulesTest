@@ -81,7 +81,7 @@ Describe 'TestLoading' {
     }
 
     It 'Clear does work correctly' {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
         Clear-EnvironmentModules -Force | Should -Be $null
     }
 }
@@ -94,8 +94,8 @@ Describe 'TestLoading_ConflictingDependencies' {
     }
 
     It 'Conflicting Dependencies are detected' {
-        Import-EnvironmentModule 'ProgramD-x64'
-        Import-EnvironmentModule 'ProgramE-x64'
+        Import-EnvironmentModule 'ProgramD-x64' -Silent
+        Import-EnvironmentModule 'ProgramE-x64' -ErrorAction SilentlyContinue
 
         $module = Get-EnvironmentModule 'ProgramE-x64'
         $module | Should -BeNullOrEmpty
@@ -108,7 +108,7 @@ Describe 'TestLoading_CustomPath_Directory' {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
-        Import-EnvironmentModule "Project-ProgramB"
+        Import-EnvironmentModule "Project-ProgramB" -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -128,7 +128,7 @@ Describe 'TestLoading_CustomPath_Environment' {
         $env:TESTLADOING_PATH = "$customDirectory"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
-        Import-EnvironmentModule "Project-ProgramB"
+        Import-EnvironmentModule "Project-ProgramB" -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -157,7 +157,7 @@ Describe 'TestLoading_Environment_Subpath' {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramC")
         $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
-        Import-EnvironmentModule "Project-ProgramC"
+        Import-EnvironmentModule "Project-ProgramC" -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -174,7 +174,7 @@ Describe 'TestLoading_InvalidCustomPath' {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB_")
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
-        Import-EnvironmentModule "Project-ProgramB"
+        Import-EnvironmentModule "Project-ProgramB" -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -188,7 +188,7 @@ Describe 'TestLoading_InvalidCustomPath' {
 
 Describe 'TestLoading_AbstractModule' {
     BeforeEach {
-        Import-EnvironmentModule "Project-ProgramA"
+        Import-EnvironmentModule "Project-ProgramA" -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -247,7 +247,7 @@ Describe 'TestCopy' {
 
 Describe 'TestSwitch' {
     BeforeEach {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -275,7 +275,7 @@ Describe 'TestSwitch' {
 
 Describe 'TestGet' {
     BeforeEach {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -289,7 +289,7 @@ Describe 'TestGet' {
 
 Describe 'TestCircularDependencies' {
     BeforeEach {
-        Import-EnvironmentModule 'DependencyBase'
+        Import-EnvironmentModule 'DependencyBase' -ErrorAction SilentlyContinue
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -308,7 +308,7 @@ Describe 'TestCircularDependencies' {
 
 Describe 'TestAlias' {
     BeforeEach {
-        Import-EnvironmentModule 'ProgramD-x64'
+        Import-EnvironmentModule 'ProgramD-x64' -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -324,7 +324,7 @@ Describe 'TestAlias' {
 
 Describe 'TestFunctionStack' {
     BeforeEach {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -365,27 +365,27 @@ Describe 'TestParameters' {
 
     It 'Default Parameters are loaded correctly' {
         Import-EnvironmentModule 'ProgramE-x64'
-        (Get-EnvironmentModuleParameter "ProgramE.Parameter1") | Should -Be "Default"
-        (Get-EnvironmentModuleParameter "ProgramE.Parameter2") | Should -Be "Default"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "Default"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter2").Value | Should -Be "Default"
     }
 
     It 'Parameter can be accessed correctly' {
         Import-EnvironmentModule 'ProgramE-x64'
-        Get-EnvironmentModuleParameters "*" | Select-Object -ExpandProperty "Parameter" | Should -Contain "ProgramE.Parameter1"
+        Get-EnvironmentModuleParameter "*" | Select-Object -ExpandProperty "Name" | Should -Contain "ProgramE.Parameter1"
     }
 
     It 'Parameters are overwritten correctly' {
-        Import-EnvironmentModule 'Project-ProgramA'
-        (Get-EnvironmentModuleParameter "ProgramD.Parameter1") | Should -Be "ProjectValue"
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
+        (Get-EnvironmentModuleParameter "ProgramD.Parameter1").Value | Should -Be "ProjectValue"
     }
 
     It 'Modules can access the Parameters' {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
         Get-ProjectValue | Should -Be "ProjectValue"
     }
 
     It 'Module has a valid temp directory' {
-        Import-EnvironmentModule 'Project-ProgramA'
+        Import-EnvironmentModule 'Project-ProgramA' -Silent
         $loadedModules = Get-EnvironmentModule
         $loadedModules | ForEach-Object { (Test-Path $_.TmpDirectory) | Should -Be $True }
     }
