@@ -62,7 +62,7 @@ Describe 'TestLoading' {
 
     It 'Dependency was loaded correctly' {
         Import-EnvironmentModule 'ProgramE'
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x64"
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x86"
         $module | Should -Not -BeNullOrEmpty
     }
 
@@ -83,6 +83,22 @@ Describe 'TestLoading' {
     It 'Clear does work correctly' {
         Import-EnvironmentModule 'Project-ProgramA'
         Clear-EnvironmentModules -Force | Should -Be $null
+    }
+}
+
+Describe 'TestLoading_ConflictingDependencies' {
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Conflicting Dependencies are detected' {
+        Import-EnvironmentModule 'ProgramD-x64'
+        Import-EnvironmentModule 'ProgramE-x64'
+
+        $module = Get-EnvironmentModule 'ProgramE-x64'
+        $module | Should -BeNullOrEmpty
     }
 }
 
