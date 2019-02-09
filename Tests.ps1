@@ -219,6 +219,11 @@ Describe 'TestLoading_AbstractModule' {
         $result = Get-ProjectRoot  # Call function of abstract module
         $result | Should -BeExactly "C:\Temp"
     }
+
+    It 'Abstract Module has correct source module' {
+        $result = Get-SourceModule
+        $result.FullName | Should -BeExactly "Project-ProgramA"
+    }
 }
 
 Describe 'TestCopy' {

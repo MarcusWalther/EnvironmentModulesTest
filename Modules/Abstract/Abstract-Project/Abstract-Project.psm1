@@ -7,3 +7,7 @@ param(
 $Module.AddFunction("Get-ProjectRoot", {
 	return $env:PROJECT_ROOT
 })
+
+$Module.AddFunction("Get-SourceModule", {
+	return $Module.SourceModule
+})
