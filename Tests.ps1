@@ -28,21 +28,6 @@ Describe 'TestLoading' {
         'EnvironmentModules' | Should -BeIn $loadedModules
     }
 
-    It 'Default Modules were created' {
-        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramD"
-        $availableModules.Length | Should -Be 1
-    }
-
-    It 'Abstract Default Module was not created' {
-        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "Abstract"
-        $availableModules | Should -Be $null
-    }
-
-    It 'Meta Default Module was not created' {
-        $availableModules = Get-EnvironmentModule -ListAvailable | Select-Object -Expand FullName
-        'Project' | Should -Not -BeIn $availableModules
-    }
-
     It 'Module should not exist twice' {
         $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramD-x64"
         $availableModules.Length | Should -Be 1
@@ -86,6 +71,96 @@ Describe 'TestLoading' {
     }
 }
 
+Describe 'Test_DefaultModuleCreation' {
+
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Default Modules were created' {
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramD"
+        $availableModules.Length | Should -Be 1
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramF-1"
+        $availableModules.Length | Should -Be 1
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramF"
+        $availableModules.Length | Should -Be 1
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramG"
+        $availableModules.Length | Should -Be 1
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramG-1-x86"
+        $availableModules.Length | Should -Be 1
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "ProgramG-1-x64"
+        $availableModules.Length | Should -Be 1
+    }
+
+    It 'Default Modules loads the correct module' {
+        Import-EnvironmentModule "ProgramG-1-x86"
+        $loadedModules = Get-EnvironmentModule | Select-Object -Expand FullName
+        "ProgramG-1.3_beta-x86" | Should -BeIn $loadedModules
+    }
+
+    It 'Abstract Default Module was not created' {
+        $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "Abstract"
+        $availableModules | Should -Be $null
+    }
+
+    It 'Meta Default Module was not created' {
+        $availableModules = Get-EnvironmentModule -ListAvailable | Select-Object -Expand FullName
+        'Project' | Should -Not -BeIn $availableModules
+    }
+}
+
+Describe 'Test_SplitEnvironmentModuleName' {
+    It 'Simple names correct detected' {
+        $result = Split-EnvironmentModuleName "ProgramXYZ" -Silent
+        $result.Name | Should -Be "ProgramXYZ"
+        $result.Version | Should -BeNullOrEmpty
+        $result.Architecture | Should -BeNullOrEmpty
+        $result.AdditionalOptions | Should -BeNullOrEmpty
+    }
+
+    It 'Invalid names correct detected' {
+        $result = Split-EnvironmentModuleName "Program.Abstract" -Silent
+        $result | Should -BeNullOrEmpty
+        $result = Split-EnvironmentModuleName "Program Abstract" -Silent
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Version correct detected' {
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0.2.4" -Silent
+        $result.Name | Should -Be "ProgramXYZ"
+        $result.Version | Should -Be "1.0.2.4"
+        $result.Architecture | Should -BeNullOrEmpty
+        $result.AdditionalOptions | Should -BeNullOrEmpty
+    }
+
+    It 'Invalid version correct detected' {
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0-2.4" -Silent
+        $result | Should -BeNullOrEmpty
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1Beta0-2.4" -Silent
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Architecture correct detected' {
+        $result = Split-EnvironmentModuleName "ProgramXYZ-x64" -Silent
+        $result.Architecture | Should -Be "x64"
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0.dev-x86" -Silent
+        $result.Version | Should -Be "1.0.dev"
+        $result.Architecture | Should -Be "x86"
+    }
+
+    It 'Additional options correct detected' {
+        $result = Split-EnvironmentModuleName "ProgramXYZ-x64-ForTesting" -Silent
+        $result.Architecture | Should -Be "x64"
+        $result.AdditionalOptions | Should -Be "ForTesting"
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0.dev-x86-ForTesting" -Silent
+        $result.Version | Should -Be "1.0.dev"
+        $result.Architecture | Should -Be "x86"
+        $result.AdditionalOptions | Should -Be "ForTesting"
+    }
+}
+
 Describe 'TestLoading_ConflictingDependencies' {
     BeforeEach {
     }
@@ -125,8 +200,8 @@ Describe 'TestLoading_CustomPath_Environment' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
-        $env:TESTLADOING_PATH = "$customDirectory"
-        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLADOING_PATH"
+        $env:TESTLOADING_PATH = "$customDirectory"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLOADING_PATH"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
         Import-EnvironmentModule "Project-ProgramB" -Silent
     }
@@ -142,7 +217,7 @@ Describe 'TestLoading_CustomPath_Environment' {
     It 'SearchPath correctly returned' {
         $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
         $searchPaths.Count | Should -Be 2
-        $searchPaths[0].Key | Should -Be "TESTLADOING_PATH"
+        $searchPaths[0].Key | Should -Be "TESTLOADING_PATH"
     }
 
     It 'Remove Search Path works correctly' {
@@ -197,11 +272,11 @@ Describe 'TestLoading_AbstractModule' {
     It 'Modules was not loaded' {
         Clear-EnvironmentModules -Force
         try {
-            Import-EnvironmentModule 'Abstract-Project'
+            Import-EnvironmentModule 'Abstract_Project'
         }
         catch {
         }
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "Abstract-Project"
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -like "Abstract_Project"
         $module | Should -BeNullOrEmpty
     }
 
@@ -211,7 +286,7 @@ Describe 'TestLoading_AbstractModule' {
     }
 
     It 'Abstract Module is loaded correctly' {
-        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Abstract-Project"
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Abstract_Project"
         $module | Should -Not -BeNullOrEmpty
     }
 
