@@ -12,6 +12,7 @@ $configDirectory = Join-Path $PSScriptRoot "Config"
 $startEnvironmentScript = Join-Path $env:ENVIRONMENT_MODULE_ROOT (Join-Path "Samples" "StartSampleEnvironment.ps1")
 
 # Prepare the environment
+Clear-EnvironmentModules -Force
 . $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
 Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $modulesRootFolder
 
@@ -414,8 +415,8 @@ Describe 'TestFunctionStack' {
         $knownFunctions = Get-EnvironmentModuleFunction -FunctionName "Start-Cmd"
         $knownFunctions | Should -HaveCount 2
 
-        $knownFunctions[0].ModuleFullName | Should -Be "ProgramD-x64"
-        $knownFunctions[1].ModuleFullName | Should -Be "Project-ProgramA"
+        $knownFunctions[0].ModuleFullName | Should -Be "Project-ProgramA"
+        $knownFunctions[1].ModuleFullName | Should -Be "ProgramD-x64"
     }
 
     It 'Function Stack invoke does work correctly' {
