@@ -16,6 +16,8 @@ Clear-EnvironmentModules -Force
 . $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
 Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $modulesRootFolder
 
+Update-EnvironmentModuleCache
+
 Describe 'TestLoading' {
 
     BeforeEach {
@@ -193,6 +195,7 @@ Describe 'TestLoading_CustomPath_Directory' {
     It 'Module is loaded correctly' {
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
         $module | Should -Not -BeNullOrEmpty
+        $module.ModuleRoot | Should -Not -BeNullOrEmpty
     }
 }
 
@@ -469,5 +472,19 @@ Describe 'TestParameters' {
         Import-EnvironmentModule 'Project-ProgramA' -Silent
         $loadedModules = Get-EnvironmentModule
         $loadedModules | ForEach-Object { (Test-Path $_.TmpDirectory) | Should -Be $True }
+    }
+}
+
+Describe 'TestTemplateRenderer' {
+    BeforeEach {
+        Import-EnvironmentModule "Project-ProgramA" -Silent
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Template Rendering Works' {
+        $fileContent = Get-Content (Render-TemplateFile)
+        $fileContent | Should -Be "Hello=World"
     }
 }
