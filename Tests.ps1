@@ -5,14 +5,13 @@ if($null -eq (Get-Module -Name "Pester")) {
 # The directories and scripts to use
 $modulesRootFolder = Join-Path $PSScriptRoot "Modules"
 
-$additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $modulesRootFolder))
+$additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $modulesRootFolder | Select-Object -ExpandProperty "FullName"))
 
 $tempDirectory = Join-Path $PSScriptRoot "Tmp"
 $configDirectory = Join-Path $PSScriptRoot "Config"
-$startEnvironmentScript = Join-Path $env:ENVIRONMENT_MODULE_ROOT (Join-Path "Samples" "StartSampleEnvironment.ps1")
+$startEnvironmentScript = Join-Path ((Get-Module "EnvironmentModuleCore").ModuleBase) (Join-Path "Samples" "StartSampleEnvironment.ps1")
 
 # Prepare the environment
-Clear-EnvironmentModules -Force
 . $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
 Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $modulesRootFolder
 
@@ -28,7 +27,7 @@ Describe 'TestLoading' {
 
     It 'Main module was loaded' {
         $loadedModules = Get-Module | Select-Object -Expand Name
-        'EnvironmentModules' | Should -BeIn $loadedModules
+        'EnvironmentModuleCore' | Should -BeIn $loadedModules
     }
 
     It 'Module should not exist twice' {
@@ -205,8 +204,8 @@ Describe 'TestLoading_CustomPath_Environment' {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         $env:TESTLOADING_PATH = "$customDirectory"
-        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "TESTLOADING_PATH"
-        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Environment" -Key "UNDEFINED_VARIABLE"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "ENVIRONMENT_VARIABLE" -Key "TESTLOADING_PATH"
+        Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "ENVIRONMENT_VARIABLE" -Key "UNDEFINED_VARIABLE"
         Import-EnvironmentModule "Project-ProgramB" -Silent
     }
     AfterEach {
@@ -367,7 +366,7 @@ Describe 'TestGet' {
 
     It 'Correct style version is returned' {
         $module = Get-EnvironmentModule -ModuleFullName "Project-ProgramA"
-        ($module.StyleVersion) | Should -Be 2.1
+        ($module.StyleVersion) | Should -Be 3.0
     }
 }
 

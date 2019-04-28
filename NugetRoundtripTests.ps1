@@ -5,7 +5,7 @@ if($null -eq (Get-Module -Name "Pester")) {
 # The directories and scripts to use
 $modulesRootFolder = Join-Path $PSScriptRoot "Modules"
 $downloadedModulesRootFolder = Join-Path $PSScriptRoot "DownloadedModules"
-mkdir -Force $downloadedModulesRootFolder
+New-Item -ItemType directory -Force $downloadedModulesRootFolder
 
 $tempDirectory = Join-Path $PSScriptRoot "Tmp"
 $configDirectory = Join-Path $PSScriptRoot "Config"

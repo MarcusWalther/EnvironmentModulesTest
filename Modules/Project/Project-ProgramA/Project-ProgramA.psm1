@@ -1,6 +1,6 @@
 param(
     [parameter(Position=0, Mandatory=$true)]
-	[EnvironmentModules.EnvironmentModule]
+	[EnvironmentModuleCore.EnvironmentModule]
 	$Module
 )
 
@@ -21,7 +21,7 @@ $Module.AddFunction("Render-TemplateFile", {
 
 	$targetFile = (Join-Path $Module.TmpDirectory "RenderedFile.txt")
 	$templateFile = (Join-Path $Module.ModuleBase "TemplateFile.template")
-	[EnvironmentModules.TemplateRenderer]::CreateConcreteFileFromTemplate($definition, $templateFile, $targetFile)
+	[EnvironmentModuleCore.TemplateRenderer]::CreateConcreteFileFromTemplate($definition, $templateFile, $targetFile)
 
 	return $targetFile
 })
