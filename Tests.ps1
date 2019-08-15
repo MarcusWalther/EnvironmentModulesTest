@@ -198,6 +198,61 @@ Describe 'TestLoading_CustomPath_Directory' {
     }
 }
 
+Describe 'TestLoading_CustomPath_Directory_Temp' {
+
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -Force
+        $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+        Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory -IsTemporary
+        Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" "SomeStupidLocation"
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Module is loaded correctly' {
+        Import-EnvironmentModule "Project-ProgramB" -Silent
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
+        $module | Should -Not -BeNullOrEmpty
+        $module.ModuleRoot | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Module could not be loaded' {
+        Clear-EnvironmentModuleSearchPaths -Force -OnlyTemporary
+        Import-EnvironmentModule "Project-ProgramB" -Silent
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
+        $module | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'TestLoading_CustomPath_Directory_Global' {
+    $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+
+    BeforeEach {
+        Clear-EnvironmentModuleSearchPaths -IncludeGlobal -Force
+        Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory -IsGlobal
+        Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" "SomeStupidLocation"
+    }
+    AfterEach {
+        Clear-EnvironmentModuleSearchPaths -IncludeGlobal -Force
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Module is loaded correctly' {
+        Import-EnvironmentModule "Project-ProgramB" -Silent
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
+        $module | Should -Not -BeNullOrEmpty
+        $module.ModuleRoot | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Module could not be loaded' {
+        Clear-EnvironmentModuleSearchPaths -Force -IncludeGlobal
+        Import-EnvironmentModule "Project-ProgramB" -Silent
+        $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "Project-ProgramB"
+        $module | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'TestLoading_CustomPath_Environment' {
 
     BeforeEach {
@@ -224,7 +279,7 @@ Describe 'TestLoading_CustomPath_Environment' {
     }
 
     It 'Remove Search Path works correctly' {
-        Remove-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Key "UNDEFINED_VARIABLE"
+        Remove-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Key "UNDEFINED_VARIABLE" -Force
         $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
         $searchPaths.Count | Should -Be 1
     }

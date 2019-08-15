@@ -27,7 +27,11 @@ Copyright = '(c) 2015 MarcusW.'
 Description = 'This environment module gives you access to the "ProjectC" modules.'
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @("EnvironmentModuleCore")
+PrivateData = @{
+  PSData = @{
+    ExternalModuleDependencies = @('EnvironmentModuleCore')
+  }
+}
 
 # List of all modules packaged with this module
 ModuleList = @("ProgramD-x64")
