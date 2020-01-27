@@ -5,6 +5,7 @@ param(
 )
 
 $Module.AddAlias("ppp", "Start-ProgramD", "Use 'ppp' to start ProgramD")
+$Module.AddSetPath("PROJECT_ROOT", "C:\Temp\Something")
 $Module.AddSetPath("PROJECT_ROOT", "C:\Temp")
 
 $Module.AddFunction("Start-Cmd", {

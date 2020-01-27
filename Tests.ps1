@@ -45,6 +45,7 @@ Describe 'TestLoading' {
         Import-EnvironmentModule 'ProgramD'
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x64"
         $module | Should -Not -BeNullOrEmpty
+        $env:PROJECT_ROOT | Should -Be "C:\Temp"
     }
 
     It 'Dependency was loaded correctly' {
