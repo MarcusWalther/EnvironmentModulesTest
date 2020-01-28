@@ -139,9 +139,9 @@ Describe 'Test_SplitEnvironmentModuleName' {
     }
 
     It 'Invalid version correct detected' {
-        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0-2.4" -Silent
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1.0-2.4-x64" -Silent
         $result | Should -BeNullOrEmpty
-        $result = Split-EnvironmentModuleName "ProgramXYZ-1Beta0-2.4" -Silent
+        $result = Split-EnvironmentModuleName "ProgramXYZ-1Beta0-2.4-x86" -Silent
         $result | Should -BeNullOrEmpty
     }
 
@@ -186,6 +186,8 @@ Describe 'TestLoading_CustomPath_Directory' {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
+        (Get-EnvironmentModuleSearchPath "Project-ProgramB" -Custom).Length | Should -BeExactly 1
+        (Get-EnvironmentModuleSearchPath "Project-ProgramB").Length | Should -BeExactly 2
         Import-EnvironmentModule "Project-ProgramB" -Silent
     }
     AfterEach {
@@ -275,14 +277,14 @@ Describe 'TestLoading_CustomPath_Environment' {
 
     It 'SearchPath correctly returned' {
         $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
-        $searchPaths.Count | Should -Be 2
+        $searchPaths.Count | Should -Be 3
         $searchPaths[0].Key | Should -Be "TESTLOADING_PATH"
     }
 
     It 'Remove Search Path works correctly' {
         Remove-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Key "UNDEFINED_VARIABLE" -Force
         $searchPaths = Get-EnvironmentModuleSearchPath "Project-ProgramB"
-        $searchPaths.Count | Should -Be 1
+        $searchPaths.Count | Should -Be 2
     }
 }
 
@@ -541,5 +543,31 @@ Describe 'TestTemplateRenderer' {
     It 'Template Rendering Works' {
         $fileContent = Get-Content (Render-TemplateFile)
         $fileContent | Should -Be "Hello=World"
+    }
+}
+
+Describe 'TestModuleCreation' {
+    $moduleDirectory = "$tempDirectory/TestModule-4.5-x86"
+    BeforeEach {
+        if(Test-Path $moduleDirectory) {
+            Remove-Item -Recurse $moduleDirectory
+        }
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Module Creation in tmp fails' {
+        {New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$tempDirectory"} | Should -Throw
+    }
+
+    It 'Module Creation' {
+        New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$tempDirectory" -Dependencies "ModuleDependency" -Parameters @{"Param1"="Param1Value"} -Force
+        $moduleInfo = New-EnvironmentModuleInfo -ModuleFile "$moduleDirectory/TestModule-4.5-x86.psd1"
+        $moduleInfo.Dependencies[0].ModuleFullName | Should -BeExactly "ModuleDependency"
+        $moduleInfo.Dependencies.Length | Should -BeExactly 1
+        $moduleInfo.Architecture | Should -BeExactly "x86"
+        $moduleInfo.Parameters["Param1"] | Should -BeExactly "Param1Value"
+        $moduleInfo.Parameters.Length | Should -BeExactly 1
     }
 }

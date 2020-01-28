@@ -23,6 +23,8 @@
     # Required files that must be part of the folder candidate
     RequiredItems = @("File.txt")
 
+    DefaultSearchPaths = @("X:/Directory")
+
     # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
     Category = "Project"
 }
