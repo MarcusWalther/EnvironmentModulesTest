@@ -36,33 +36,33 @@ Describe 'TestLoading' {
     }
 
     It 'Meta-Module is unloaded directly' {
-        Import-EnvironmentModule 'ProgramD'
+        Import-EnvironmentModule 'ProgramD' -Silent
         $metaModule = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD"
         $metaModule | Should -BeNullOrEmpty
     }
 
     It 'Module is loaded correctly' {
-        Import-EnvironmentModule 'ProgramD'
+        Import-EnvironmentModule 'ProgramD' -Silent
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x64"
         $module | Should -Not -BeNullOrEmpty
         $env:PROJECT_ROOT | Should -Be "C:\Temp"
     }
 
     It 'Dependency was loaded correctly' {
-        Import-EnvironmentModule 'ProgramE'
+        Import-EnvironmentModule 'ProgramE' -Silent
         $module = Get-EnvironmentModule | Where-Object -Property "FullName" -eq "ProgramD-x86"
         $module | Should -Not -BeNullOrEmpty
     }
 
     It 'Module can be removed with dependencies' {
-        Import-EnvironmentModule 'ProgramD'
+        Import-EnvironmentModule 'ProgramD' -Silent
         Remove-EnvironmentModule 'ProgramD-x64'
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty
     }
 
     It 'Project Module can be removed with dependencies' {
-        Import-EnvironmentModule 'ProgramE'
+        Import-EnvironmentModule 'ProgramE' -Silent
         Remove-EnvironmentModule 'ProgramE-x64'
         $module = Get-EnvironmentModule
         $module | Should -BeNullOrEmpty
@@ -98,7 +98,7 @@ Describe 'Test_DefaultModuleCreation' {
     }
 
     It 'Default Modules loads the correct module' {
-        Import-EnvironmentModule "ProgramG-1-x86"
+        Import-EnvironmentModule "ProgramG-1-x86" -Silent
         $loadedModules = Get-EnvironmentModule | Select-Object -Expand FullName
         "ProgramG-1.3_beta-x86" | Should -BeIn $loadedModules
     }
@@ -173,7 +173,7 @@ Describe 'TestLoading_ConflictingDependencies' {
 
     It 'Conflicting Dependencies are detected' {
         Import-EnvironmentModule 'ProgramD-x64' -Silent
-        Import-EnvironmentModule 'ProgramE-x64' -ErrorAction SilentlyContinue
+        Import-EnvironmentModule 'ProgramE-x64' -Silent -ErrorAction SilentlyContinue
 
         $module = Get-EnvironmentModule 'ProgramE-x64'
         $module | Should -BeNullOrEmpty
@@ -333,7 +333,7 @@ Describe 'TestLoading_AbstractModule' {
     It 'Modules was not loaded' {
         Clear-EnvironmentModules -Force
         try {
-            Import-EnvironmentModule 'Abstract_Project'
+            Import-EnvironmentModule 'Abstract_Project' -Silent
         }
         catch {
         }
@@ -430,7 +430,7 @@ Describe 'TestGet' {
 
 Describe 'TestCircularDependencies' {
     BeforeEach {
-        Import-EnvironmentModule 'DependencyBase' -ErrorAction SilentlyContinue
+        Import-EnvironmentModule 'DependencyBase' -Silent -ErrorAction SilentlyContinue
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -505,13 +505,13 @@ Describe 'TestParameters' {
     }
 
     It 'Default Parameters are loaded correctly' {
-        Import-EnvironmentModule 'ProgramE-x64'
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
         (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "Default"
         (Get-EnvironmentModuleParameter "ProgramE.Parameter2").Value | Should -Be "Default"
     }
 
     It 'Parameter can be accessed correctly' {
-        Import-EnvironmentModule 'ProgramE-x64'
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
         Get-EnvironmentModuleParameter "*" | Select-Object -ExpandProperty "Name" | Should -Contain "ProgramE.Parameter1"
     }
 
@@ -569,5 +569,50 @@ Describe 'TestModuleCreation' {
         $moduleInfo.Architecture | Should -BeExactly "x86"
         $moduleInfo.Parameters["Param1"] | Should -BeExactly "Param1Value"
         $moduleInfo.Parameters.Length | Should -BeExactly 1
+    }
+}
+
+Describe 'TestPathManipulation' {
+    BeforeEach {
+        $env:ENV_TEST_PATH = [String]::Join([IO.Path]::PathSeparator, @("A", "B", "C"))
+        $env:ENV_TEST_PATH2 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH3 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH4 = $env:ENV_TEST_PATH
+        Import-EnvironmentModule "ProgramH" -Silent
+    }
+    AfterEach {
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH = ""
+        $env:ENV_TEST_PATH2 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH3 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH4 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH5 = $env:ENV_TEST_PATH
+    }
+
+    It 'Simple Path Append is removed correctly' {
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH3 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("A", "B", "C")))
+    }
+
+    It 'Complex Path Append is removed correctly' {
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH2 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("A", "B", "C")))
+    }
+
+    It 'Complex Path Prepend is removed correctly' {
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("A", "B", "C")))
+    }
+
+    It 'Set Path is restored correctly' {
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH4 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("A", "B", "C")))
+        $env:ENV_TEST_PATH5 | Should -BeExactly $null
+    }
+
+    It 'Custom Set Path is restored correctly' {
+        $env:ENV_TEST_PATH4 = "MyValue"
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH4 | Should -BeExactly "MyValue"
     }
 }
