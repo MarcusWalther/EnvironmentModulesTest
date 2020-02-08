@@ -27,5 +27,6 @@
     Parameters = @{
         "ProgramE.Parameter1" = "Default"
         "ProgramE.Parameter2" = "Default"
+        "ProgramE.Parameter3" = ""
     }
 }

@@ -408,6 +408,14 @@ Describe 'TestSwitch' {
         $module | Should -Not -BeNullOrEmpty
     }
 
+    It 'Switch module works keeps user defined parameters' {
+        Set-EnvironmentModuleParameter "ProgramD.Parameter1" "NewValue1"
+        Set-EnvironmentModuleParameter "ProgramD.Parameter2" "NewValue2"
+        Switch-EnvironmentModule 'ProgramD-x64' 'ProgramD-x86'
+        Get-EnvironmentModuleParameter "ProgramD.Parameter1" | Should -BeNullOrEmpty
+        (Get-EnvironmentModuleParameter "ProgramD.Parameter2").Value | Should -BeExactly "NewValue2"
+    }
+
     It 'Meta function works' {
         $result = Start-Cmd 42
         $result | Should -BeExactly 42
@@ -508,6 +516,14 @@ Describe 'TestParameters' {
         Import-EnvironmentModule 'ProgramE-x64' -Silent
         (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "Default"
         (Get-EnvironmentModuleParameter "ProgramE.Parameter2").Value | Should -Be "Default"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter3").Value | Should -Be "MyValue"
+        (Get-EnvironmentModuleParameter "*" -UserDefined) | Should -Be $null
+    }
+
+    It 'User defined attributes are detected correctly' {
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
+        (Set-EnvironmentModuleParameter "ProgramE.Parameter3" "CustomValue")
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter3" -UserDefined).Value | Should -Be "CustomValue"
     }
 
     It 'Parameter can be accessed correctly' {
