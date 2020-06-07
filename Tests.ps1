@@ -11,6 +11,11 @@ $tempDirectory = Join-Path $PSScriptRoot "Tmp"
 $configDirectory = Join-Path $PSScriptRoot "Config"
 $startEnvironmentScript = Join-Path ((Get-Module "EnvironmentModuleCore").ModuleBase) (Join-Path "Samples" "StartSampleEnvironment.ps1")
 
+if(-not (Test-Path "$startEnvironmentScript")) {
+    # Fallback directory, if the samples cannot be found in the active EnvironmentModuleCore module
+    $startEnvironmentScript = Join-Path "$PSScriptRoot/.." (Join-Path "Samples" "StartSampleEnvironment.ps1")
+}
+
 # Prepare the environment
 . $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
 Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $modulesRootFolder
