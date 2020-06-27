@@ -4,6 +4,7 @@ if($null -eq (Get-Module -Name "Pester")) {
 
 # The directories and scripts to use
 $modulesRootFolder = Join-Path $PSScriptRoot "Modules"
+Write-Host "Using root folder $modulesRootFolder"
 
 $additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $modulesRootFolder | Select-Object -ExpandProperty "FullName"))
 
