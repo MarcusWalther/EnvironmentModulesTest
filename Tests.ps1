@@ -104,6 +104,12 @@ Describe 'Test_DefaultModuleCreation' {
         "ProgramG-1.3_beta-x86" | Should -BeIn $loadedModules
     }
 
+    It 'Default Modules loads the lates module' {
+        Import-EnvironmentModule "ProgramZ" -Silent
+        $loadedModules = Get-EnvironmentModule | Select-Object -Expand FullName
+        "ProgramZ-3_10-x64" | Should -BeIn $loadedModules
+    }
+
     It 'Abstract Default Module was not created' {
         $availableModules = Get-EnvironmentModule -ListAvailable -ModuleFullName "Abstract"
         $availableModules | Should -Be $null
@@ -162,6 +168,17 @@ Describe 'Test_SplitEnvironmentModuleName' {
         $result.Version | Should -Be "1.0.dev"
         $result.Architecture | Should -Be "x86"
         $result.AdditionalOptions | Should -Be "ForTesting"
+    }
+}
+
+Describe 'Test_SortEnvironmentModules' {
+    It 'Sort Modules By Version' {
+        $modules = Get-EnvironmentModule -ListAvailable "ProgramZ*" -SkipMetaModules
+        $modules.Length | Should -Be 4
+        $modules = Compare-EnvironmentModulesByVersion $modules
+        $modules.Length | Should -Be 4
+        $modules[0].Version | Should -Be "3_11"
+        $modules[3].Version | Should -Be "3_6"
     }
 }
 
