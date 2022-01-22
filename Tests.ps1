@@ -202,7 +202,6 @@ Describe 'TestLoading_CustomPath_Directory' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        Write-Host "Module root folder is $($global:modulesRootFolder)"
         $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
         (Get-EnvironmentModuleSearchPath "Project-ProgramB" -Custom).Length | Should -BeExactly 1
