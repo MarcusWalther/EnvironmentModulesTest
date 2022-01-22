@@ -3,18 +3,18 @@ if($null -eq (Get-Module -Name "Pester")) {
 }
 
 # The directories and scripts to use
-$script:modulesRootFolder = Join-Path $PSScriptRoot "Modules"
-Write-Host "Using root folder $script:modulesRootFolder"
+$global:modulesRootFolder = Join-Path $PSScriptRoot "Modules"
+Write-Host "Using root folder $global:modulesRootFolder"
 
-$additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $script:modulesRootFolder | Select-Object -ExpandProperty "FullName"))
+$additionalModulePaths = [string]::Join([IO.Path]::PathSeparator, (Get-ChildItem -Directory $global:modulesRootFolder | Select-Object -ExpandProperty "FullName"))
 
-$script:tempDirectory = Join-Path $PSScriptRoot "Tmp"
+$global:tempDirectory = Join-Path $PSScriptRoot "Tmp"
 $configDirectory = Join-Path $PSScriptRoot "Config"
 $startEnvironmentScript = Join-Path ((Get-Module "EnvironmentModuleCore").ModuleBase) (Join-Path "Samples" "StartSampleEnvironment.ps1")
 
 # Prepare the environment
-. $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $script:tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
-Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $script:modulesRootFolder
+. $startEnvironmentScript -AdditionalModulePaths $additionalModulePaths -TempDirectory $global:tempDirectory -ConfigDirectory $configDirectory -IgnoreSamplesFolder
+Set-EnvironmentModuleConfigurationValue -ParameterName "DefaultModuleStoragePath" -Value $global:modulesRootFolder
 
 Update-EnvironmentModuleCache
 
@@ -202,7 +202,8 @@ Describe 'TestLoading_CustomPath_Directory' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+        Write-Host "Module root folder is $($global:modulesRootFolder)"
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory
         (Get-EnvironmentModuleSearchPath "Project-ProgramB" -Custom).Length | Should -BeExactly 1
         (Get-EnvironmentModuleSearchPath "Project-ProgramB").Length | Should -BeExactly 2
@@ -223,7 +224,7 @@ Describe 'TestLoading_CustomPath_Directory_Temp' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory -IsTemporary
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" "SomeStupidLocation"
     }
@@ -248,7 +249,7 @@ Describe 'TestLoading_CustomPath_Directory_Temp' {
 
 Describe 'TestLoading_CustomPath_Directory_Global' {
     BeforeEach {
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Clear-EnvironmentModuleSearchPaths -IncludeGlobal -Force
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" $customDirectory -IsGlobal
         Add-EnvironmentModuleSearchPath "Project-ProgramB" "Directory" "SomeStupidLocation"
@@ -277,7 +278,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         $env:TESTLOADING_PATH = "$customDirectory"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "ENVIRONMENT_VARIABLE" -Key "TESTLOADING_PATH"
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "ENVIRONMENT_VARIABLE" -Key "UNDEFINED_VARIABLE"
@@ -308,7 +309,7 @@ Describe 'TestLoading_CustomPath_Environment' {
 Describe 'TestLoading_Environment_Subpath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramC")
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramC")
         $env:PROJECT_PROGRAM_C_ROOT = "$customDirectory"
         Import-EnvironmentModule "Project-ProgramC" -Silent
     }
@@ -325,7 +326,7 @@ Describe 'TestLoading_Environment_Subpath' {
 Describe 'TestLoading_InvalidCustomPath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
-        $customDirectory = Join-Path $script:modulesRootFolder (Join-Path "Project" "Project-ProgramB_")
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB_")
         Add-EnvironmentModuleSearchPath -ModuleFullName "Project-ProgramB" -Type "Directory" -Key $customDirectory
         Import-EnvironmentModule "Project-ProgramB" -Silent
     }
@@ -581,7 +582,7 @@ Describe 'TestTemplateRenderer' {
 
 Describe 'TestModuleCreation' {    
     BeforeEach {
-        $moduleDirectory = "$script:tempDirectory/TestModule-4.5-x86"
+        $moduleDirectory = "$global:tempDirectory/TestModule-4.5-x86"
         if(Test-Path $moduleDirectory) {
             Remove-Item -Recurse $moduleDirectory
         }
@@ -591,11 +592,11 @@ Describe 'TestModuleCreation' {
     }
 
     It 'Module Creation in tmp fails' {
-        {New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$script:tempDirectory"} | Should -Throw
+        {New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$global:tempDirectory"} | Should -Throw
     }
 
     It 'Module Creation' {
-        New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$script:tempDirectory" -Dependencies "ModuleDependency" -Parameters @{"Param1"="Param1Value"} -Force
+        New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -RequiredFiles "temp.exe" -SearchPaths "C:\temp" -Path "$global:tempDirectory" -Dependencies "ModuleDependency" -Parameters @{"Param1"="Param1Value"} -Force
         $moduleInfo = New-EnvironmentModuleInfo -ModuleFile "$moduleDirectory/TestModule-4.5-x86.psd1"
         $moduleInfo.Dependencies[0].ModuleFullName | Should -BeExactly "ModuleDependency"
         $moduleInfo.Dependencies.Length | Should -BeExactly 1
