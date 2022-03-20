@@ -543,6 +543,14 @@ Describe 'TestParameters' {
         (Get-EnvironmentModuleParameter "ProgramE.Parameter3" -UserDefined).Value | Should -Be "CustomValue"
     }
 
+    It 'Komplex parameter syntax is handled correctly' {
+        Import-EnvironmentModule "ProgramF-1.0.3" -Silent
+        (Get-EnvironmentModuleParameter "ProgramF.Parameter1" -UserDefined).Value | Should -BeExactly "NewValue"
+        (Get-EnvironmentModuleParameter "ProgramF.Parameter1").IsUserDefined | Should -BeExactly $true
+        (Get-EnvironmentModuleParameter "ProgramF.Parameter2").Value | Should -BeExactly "Blubb"
+        (Get-EnvironmentModuleParameter "ProgramF.Parameter2").IsUserDefined | Should -BeExactly $false
+    }
+
     It 'Parameter can be accessed correctly' {
         Import-EnvironmentModule 'ProgramE-x64' -Silent
         Get-EnvironmentModuleParameter "*" | Select-Object -ExpandProperty "Name" | Should -Contain "ProgramE.Parameter1"
@@ -600,7 +608,7 @@ Describe 'TestModuleCreation' {
         $moduleInfo.Dependencies[0].ModuleFullName | Should -BeExactly "ModuleDependency"
         $moduleInfo.Dependencies.Length | Should -BeExactly 1
         $moduleInfo.Architecture | Should -BeExactly "x86"
-        $moduleInfo.Parameters["Param1"] | Should -BeExactly "Param1Value"
+        $moduleInfo.Parameters["Param1"].Value | Should -BeExactly "Param1Value"
         $moduleInfo.Parameters.Length | Should -BeExactly 1
     }
 }
