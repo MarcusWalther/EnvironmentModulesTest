@@ -573,6 +573,37 @@ Describe 'TestParameters' {
     }
 }
 
+Describe 'TestParameterEnvironments' {
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Default Parameters are loaded correctly' {
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "Default"
+        Get-VirtualParameterEnvironments | Should -Be @("Default", "V2")
+        Enable-VirtualParameterEnvironment "V2"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "DefaultV2"
+    }
+
+    It 'Virtual Environment Parameters are set correctly' {
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
+        Enable-VirtualParameterEnvironment "V2"
+        Set-EnvironmentModuleParameter "ProgramE.Parameter1" "NewValueV2"
+        (Get-EnvironmentModuleParameter "ProgramE.Parameter1").Value | Should -Be "NewValueV2"
+    }
+
+    It 'Parameters are removed correctly' {
+        Import-EnvironmentModule 'ProgramE-x64' -Silent
+        Enable-VirtualParameterEnvironment "V2"
+        Set-EnvironmentModuleParameter "ProgramE.Parameter1" "NewValueV2"
+        Remove-EnvironmentModule 'ProgramE-x64'
+        (Get-EnvironmentModuleParameter "ProgramE.*") | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'TestTemplateRenderer' {
     BeforeEach {
         Import-EnvironmentModule "Project-ProgramA" -Silent
@@ -608,7 +639,7 @@ Describe 'TestModuleCreation' {
         $moduleInfo.Dependencies[0].ModuleFullName | Should -BeExactly "ModuleDependency"
         $moduleInfo.Dependencies.Length | Should -BeExactly 1
         $moduleInfo.Architecture | Should -BeExactly "x86"
-        $moduleInfo.Parameters["Param1"].Value | Should -BeExactly "Param1Value"
+        $moduleInfo.Parameters[[System.Tuple[string, string]]::new("Param1", "Default")].Value | Should -BeExactly "Param1Value"
         $moduleInfo.Parameters.Length | Should -BeExactly 1
     }
 }

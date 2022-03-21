@@ -24,9 +24,10 @@
     Category = "Program"
 
     # Parameters that control the behaviour of the module. These values can be overwritten by other modules or the user
-    Parameters = @{
-        "ProgramE.Parameter1" = "Default"
-        "ProgramE.Parameter2" = "Default"
-        "ProgramE.Parameter3" = ""
-    }
+    Parameters = @(
+        @{Name="ProgramE.Parameter1";Value="Default"}
+        @{Name="ProgramE.Parameter2";Value="Default"}
+        @{Name="ProgramE.Parameter3";Value=""}
+        @{Name="ProgramE.Parameter1";Value="DefaultV2";VirtualEnvironment="V2"}
+    )
 }
