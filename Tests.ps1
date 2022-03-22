@@ -551,6 +551,14 @@ Describe 'TestParameters' {
         (Get-EnvironmentModuleParameter "ProgramF.Parameter2").IsUserDefined | Should -BeExactly $false
     }
 
+    It 'Parameter placeholders are replaced correctly' {
+        Import-EnvironmentModule 'Project-ProgramD' -Silent
+        $moduleRoot = (Get-EnvironmentModule "Project-ProgramD").ModuleRoot
+        $moduleRoot | Should -Not -BeNullOrEmpty
+        (Get-EnvironmentModuleParameter "ProgramD.Parameter3").Value | Should -BeExactly (Resolve-NotExistingPath "$moduleRoot/MySolution.sln")
+        (Get-EnvironmentModuleParameter "ProgramD.Parameter3").IsUserDefined | Should -BeExactly $false
+    }
+
     It 'Parameter can be accessed correctly' {
         Import-EnvironmentModule 'ProgramE-x64' -Silent
         Get-EnvironmentModuleParameter "*" | Select-Object -ExpandProperty "Name" | Should -Contain "ProgramE.Parameter1"
@@ -686,5 +694,18 @@ Describe 'TestPathManipulation' {
         $env:ENV_TEST_PATH4 = "MyValue"
         Remove-EnvironmentModule "ProgramH"
         $env:ENV_TEST_PATH4 | Should -BeExactly "MyValue"
+    }
+}
+
+Describe 'TestPathManipulationEnvironmentDescription' {
+    BeforeEach {
+        $env:ENV_TEST_PATH = [String]::Join([IO.Path]::PathSeparator, @("A", "B", "C"))
+        $env:ENV_TEST_PATH2 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH3 = $env:ENV_TEST_PATH
+        $env:ENV_TEST_PATH4 = $env:ENV_TEST_PATH
+        Import-EnvironmentModule "ProgramH" -Silent
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
     }
 }
