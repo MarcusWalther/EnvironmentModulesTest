@@ -697,6 +697,71 @@ Describe 'TestPathManipulation' {
     }
 }
 
+Describe 'TestDynamicManipulation' {
+    BeforeEach {
+        $env:ENV_TEST_PATH6 = ""
+        Import-EnvironmentModule "ProgramH" -Silent
+    }
+    AfterEach {
+        Remove-EnvironmentModule "ProgramH"
+    }
+
+    It 'Middle Part of Path can be changed' {
+        $pathInfo = Get-EnvironmentModulePath -Key "ExtensionMiddle"
+        $pathInfo.Key | Should -BeExactly "ExtensionMiddle"
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("BasePathA", "BasePathB", "MiddlePathA", "MiddlePathB", "EndPathA", "EndPathB")))
+        $pathInfo.Variable | Should -BeExactly "ENV_TEST_PATH6"
+        $pathInfo.ChangeValues("NewMiddlePathA")
+        Wait-Event -SourceIdentifier "OnPathChanged" -Timeout 1
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("BasePathA", "BasePathB", "NewMiddlePathA", "EndPathA", "EndPathB")))
+    }
+
+    It 'Final Part of Path can be changed' {
+        $pathInfo = Get-EnvironmentModulePath -Key "ExtensionEnd"
+        $pathInfo.Key | Should -BeExactly "ExtensionEnd"
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("BasePathA", "BasePathB", "MiddlePathA", "MiddlePathB", "EndPathA", "EndPathB")))
+        $pathInfo.Variable | Should -BeExactly "ENV_TEST_PATH6"
+        $pathInfo.ChangeValues("NewEndPathA")
+        Wait-Event -SourceIdentifier "OnPathChanged" -Timeout 1
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("BasePathA", "BasePathB", "MiddlePathA", "MiddlePathB", "NewEndPathA")))
+    }
+
+    It 'Trailing Part of Path can be changed' {
+        $pathInfo = Get-EnvironmentModulePath -Key "Base"
+        $pathInfo.Key | Should -BeExactly "Base"
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("BasePathA", "BasePathB", "MiddlePathA", "MiddlePathB", "EndPathA", "EndPathB")))
+        $pathInfo.Variable | Should -BeExactly "ENV_TEST_PATH6"
+        $pathInfo.ChangeValues("NewStartPathA")
+        Wait-Event -SourceIdentifier "OnPathChanged" -Timeout 1
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("NewStartPathA", "MiddlePathA", "MiddlePathB", "EndPathA", "EndPathB")))
+    }
+
+    It 'Path can be added dynamically' {
+        $module = Get-EnvironmentModule "ProgramH"
+        $module.AddPrependPath("ENV_TEST_PATH6", "NewPrependPath")
+        Wait-Event -SourceIdentifier "OnPathAdded" -Timeout 1
+        $env:ENV_TEST_PATH6 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("NewPrependPath", "BasePathA", "BasePathB", "MiddlePathA", "MiddlePathB", "EndPathA", "EndPathB")))
+        Remove-EnvironmentModule "ProgramH"
+        $env:ENV_TEST_PATH6 | Should -BeNullOrEmpty
+    }
+
+    It 'Function and alias can be added dynamically' {
+        $module = Get-EnvironmentModule "ProgramH"
+        $module.AddFunction("TestFunction", {return 42})
+        Wait-Event -SourceIdentifier "OnFunctionAdded" -Timeout 1
+        $result = TestFunction
+        $result | Should -BeExactly 42
+
+        $module.AddAlias("TestAlias", "TestFunction")
+        Wait-Event -SourceIdentifier "OnAliasAdded" -Timeout 1
+        $result = TestAlias
+        $result | Should -BeExactly 42
+
+        Remove-EnvironmentModule "ProgramH"
+        {TestFunction} | Should -Throw
+    }
+}
+
 Describe 'TestPathManipulationEnvironmentDescription' {
     BeforeEach {
         $env:ENV_TEST_PATH = [String]::Join([IO.Path]::PathSeparator, @("A", "B", "C"))
