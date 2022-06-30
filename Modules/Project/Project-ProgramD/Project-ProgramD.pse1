@@ -35,4 +35,17 @@
             Value="%[Path]{ModuleRoot}/MySolution.sln%"
         }
     )
+
+    Paths = @(
+        @{
+            Mode="SET"
+            Variable="PROGRAM_D_ENV_VARIABLE"
+            Value="%[Path]{ModuleRoot}/Subfolder%"
+        },
+        @{
+            Mode="APPEND"
+            Variable="PROGRAM_D_ENV_VARIABLE_2"
+            Value="%[Path]{ModuleRoot}/Subfolder%;%[Path]{ModuleRoot}/Subfolder2%;StaticContent"
+        }
+    )
 }

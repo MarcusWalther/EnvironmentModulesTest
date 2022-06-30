@@ -652,7 +652,7 @@ Describe 'TestModuleCreation' {
     }
 }
 
-Describe 'TestPathManipulation' {
+Describe 'TestPathManipulationPsm1' {
     BeforeEach {
         $env:ENV_TEST_PATH = [String]::Join([IO.Path]::PathSeparator, @("A", "B", "C"))
         $env:ENV_TEST_PATH2 = $env:ENV_TEST_PATH
@@ -697,7 +697,32 @@ Describe 'TestPathManipulation' {
     }
 }
 
-Describe 'TestDynamicManipulation' {
+Describe 'TestPathManipulationPse1' {
+    BeforeEach {
+        Import-EnvironmentModule "Project-ProgramD" -Silent
+    }
+    AfterEach {
+        Remove-EnvironmentModule "Project-ProgramD"
+        $env:PROGRAM_D_ENV_VARIABLE = $null
+        $env:PROGRAM_D_ENV_VARIABLE_2 = "MyTestValue"
+    }
+
+    It 'Simple Set Path is working correctly' {
+        $moduleRoot = (Get-EnvironmentModule "Project-ProgramD").ModuleRoot
+        $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly ([System.IO.Path]::Join($moduleRoot, "Subfolder"))
+        Remove-EnvironmentModule "Project-ProgramD"
+        $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly $null
+    }
+
+    It 'Append Path is working correctly' {
+        $moduleRoot = (Get-EnvironmentModule "Project-ProgramD").ModuleRoot
+        $env:PROGRAM_D_ENV_VARIABLE_2 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("MyTestValue", [System.IO.Path]::Join($moduleRoot, "Subfolder"), [System.IO.Path]::Join($moduleRoot, "Subfolder2"), "StaticContent")))
+        Remove-EnvironmentModule "Project-ProgramD"
+        $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly $null
+    }
+}
+
+Describe 'TestDynamicParameterManipulation' {
     BeforeEach {
         $env:ENV_TEST_PATH6 = ""
         Import-EnvironmentModule "ProgramH" -Silent
