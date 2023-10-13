@@ -21,6 +21,7 @@ Update-EnvironmentModuleCache
 Describe 'TestLoading' {
 
     BeforeEach {
+        $env:PROGRAM_D_LOADED = $null
     }
     AfterEach {
         Clear-EnvironmentModules -Force
@@ -72,6 +73,16 @@ Describe 'TestLoading' {
     It 'Clear does work correctly' {
         Import-EnvironmentModule 'Project-ProgramA' -Silent
         Clear-EnvironmentModules -Force | Should -Be $null
+    }
+
+    It 'Module loaded events are triggered' {
+        $env:PROGRAM_D_LOADED | Should -Be $null
+        Import-EnvironmentModule 'ProgramD-x64' -Silent
+        Wait-Event "OnLoaded" -Timeout 1
+        $env:PROGRAM_D_LOADED | Should -Be "true"
+        Remove-EnvironmentModule 'ProgramD-x64'
+        Wait-Event "OnUnloaded" -Timeout 1
+        $env:PROGRAM_D_LOADED | Should -Be "false"
     }
 }
 
