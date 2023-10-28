@@ -115,7 +115,7 @@ Describe 'Test_DefaultModuleCreation' {
         "ProgramG-1.3_beta-x86" | Should -BeIn $loadedModules
     }
 
-    It 'Default Modules loads the lates module' {
+    It 'Default Modules loads the latest module' {
         Import-EnvironmentModule "ProgramZ" -Silent
         $loadedModules = Get-EnvironmentModule | Select-Object -Expand FullName
         "ProgramZ-3_10-x64" | Should -BeIn $loadedModules
@@ -185,11 +185,12 @@ Describe 'Test_SplitEnvironmentModuleName' {
 Describe 'Test_SortEnvironmentModules' {
     It 'Sort Modules By Version' {
         $modules = Get-EnvironmentModule -ListAvailable "ProgramZ*" -SkipMetaModules
-        $modules.Length | Should -Be 4
+        $modules.Length | Should -Be 5
         $modules = Compare-EnvironmentModulesByVersion $modules
-        $modules.Length | Should -Be 4
+        $modules.Length | Should -Be 5
         $modules[0].Version | Should -Be "3_11"
         $modules[3].Version | Should -Be "3_6"
+        $modules[4].Version | Should -Be "DEV"
     }
 }
 
