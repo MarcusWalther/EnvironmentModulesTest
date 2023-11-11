@@ -1,10 +1,4 @@
-if($null -eq (Get-Module -Name "Pester")) {
-    Import-Module Pester
-}
-
-if($null -eq (Get-Module -Name "PSScriptAnalyzer")) {
-    Import-Module PSScriptAnalyzer
-}
+. "$PSScriptRoot/TestCommon.ps1"
 
 Describe 'Testing against Script Analyzer rules' {
     Context 'Script Analyzer Standard Rules' {

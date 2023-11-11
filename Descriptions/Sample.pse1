@@ -1,0 +1,11 @@
+#
+# An example pse1 file that can be loaded via Import-EnvironmentModuleDescription or specified as merge module.
+#
+
+
+@{
+    Dependencies = @("ProgramD")
+    Parameters = @{
+        "ProgramD.Parameter1" = "SamplePse1Value"
+    }
+}
