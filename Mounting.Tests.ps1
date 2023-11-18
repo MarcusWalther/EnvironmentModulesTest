@@ -367,3 +367,20 @@ Describe 'TestSwitch' {
         $result | Should -BeExactly 42
     }
 }
+
+Describe 'TestMergeModules' {
+    BeforeEach {
+        $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Program" "ProgramMerge")
+        $env:PROGRAM_MERGE_ROOT = "$customDirectory"
+
+        Import-EnvironmentModule 'ProgramMerge' -Silent
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Module merge works correctly' {
+        $modules = Get-EnvironmentModule
+        $modules.Count | Should -BeExactly 4
+    }
+}

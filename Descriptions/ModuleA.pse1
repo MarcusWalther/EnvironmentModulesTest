@@ -1,0 +1,11 @@
+@{
+    Dependencies = @("ProgramE", "ProgramA", "ProgramD")
+    Parameters = @{
+        "ProgramD.Parameter1" = "ValueA"
+        "ProgramE.Parameter1" = "ValueB"
+    }
+    Paths = @(
+        @{Mode="APPEND"; Variable="MODULE_A_VAR"; Value="TestValueA"},
+        @{Mode="SET"; Variable="MODULE_A_VAR2"; Value="TestValue2"}
+    )
+}
