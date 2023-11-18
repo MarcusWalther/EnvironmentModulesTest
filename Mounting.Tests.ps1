@@ -370,6 +370,7 @@ Describe 'TestSwitch' {
 
 Describe 'TestMergeModules' {
     BeforeEach {
+        Push-Location
         $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Program" "ProgramMerge")
         $env:PROGRAM_MERGE_ROOT = "$customDirectory"
 
@@ -377,10 +378,30 @@ Describe 'TestMergeModules' {
     }
     AfterEach {
         Clear-EnvironmentModules -Force
+        Pop-Location
     }
 
     It 'Module merge works correctly' {
         $modules = Get-EnvironmentModule
         $modules.Count | Should -BeExactly 4
+    }
+}
+
+Describe 'TestSwitchDirectoryToModuleRoot' {
+    $rootDirectory = $null
+    BeforeEach {
+        Push-Location
+        $rootDirectory = Join-Path $global:modulesRootFolder (Join-Path "Program" "ProgramMerge")
+        $env:PROGRAM_MERGE_ROOT = "$rootDirectory"
+
+        Import-EnvironmentModule 'ProgramMerge' -Silent
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+        Pop-Location
+    }
+
+    It 'Directory was switched correctly' {
+        Get-Location | Should -Be (Join-Path "$rootDirectory" "TestData")
     }
 }
