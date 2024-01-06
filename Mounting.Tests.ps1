@@ -112,6 +112,18 @@ Describe 'Test_DefaultModuleCreation' {
         $availableModules = Get-EnvironmentModule -ListAvailable | Select-Object -Expand FullName
         'Project' | Should -Not -BeIn $availableModules
     }
+
+    It 'Default Modules do not conflict with loaded modules' {
+        $Error.Clear()
+        Import-EnvironmentModule "ProgramG-1-x86" -Silent
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG-1-x86"
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG"
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG-x86"
+        Get-Error | Should -Be $null
+    }
 }
 
 Describe 'TestLoadingDescriptionFile' {
