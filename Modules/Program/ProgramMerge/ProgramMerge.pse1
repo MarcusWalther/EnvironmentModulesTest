@@ -1,0 +1,7 @@
+@{
+    Dependencies = @("ProgramD", "App-1.3-x64")
+    RequiredItems = @("Dependencies.pse1")
+    DefaultSearchPaths = @(@{Type="ENVIRONMENT_VARIABLE";Key="PROGRAM_MERGE_ROOT";SubFolder="TestData"})
+    MergeModules = @("%[Path]{ModuleRoot}/Dependencies.pse1%")
+    SwitchDirectoryToModuleRoot = $true
+}

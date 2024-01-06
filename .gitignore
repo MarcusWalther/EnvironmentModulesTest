@@ -1,3 +1,5 @@
 /Config/CustomSearchPaths.xml
 /Tmp/
 /DownloadedModules/
+/testResults.xml
+/coverage.xml

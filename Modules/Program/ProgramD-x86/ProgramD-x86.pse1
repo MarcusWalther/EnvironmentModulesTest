@@ -9,7 +9,7 @@
 
 @{
     # Environment Modules that must be imported into the global environment prior importing this module
-    Dependencies = @()
+    Dependencies = @("App-1.4-x86")
 
     # The type of the module, either "Default" or "Meta" if it is a project-module
     ModuleType = "Default"
@@ -22,4 +22,9 @@
 
     # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
     Category = "Program"
+
+    # Parameters that control the behaviour of the module. These values can be overwritten by other modules or the user
+    Parameters = @{
+        "ProgramD.Parameter2" = "Default"
+    }
 }
