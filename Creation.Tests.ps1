@@ -48,4 +48,11 @@ Describe 'TestModuleCreation' {
         $moduleInfo.Parameters[[System.Tuple[string, string]]::new("Param1", "Default")].Value | Should -BeExactly "Param1Value"
         $moduleInfo.Parameters.Length | Should -BeExactly 1
     }
+
+    It 'Module Creation Multiple Dependencies' {
+        New-EnvironmentModule -Name "TestModule" -Author "Max Mustermann" -Description "My Test Module" -Version "4.5" -Architecture "x86" -Path "$global:tempDirectory" -Dependencies "ModuleDependency","ModuleDependency2" -Force
+        $moduleInfo = New-EnvironmentModuleInfo -ModuleFile "$moduleDirectory/TestModule-4.5-x86.psd1"
+        $moduleInfo.Dependencies[0].ModuleFullName | Should -BeExactly "ModuleDependency"
+        $moduleInfo.Dependencies[1].ModuleFullName | Should -BeExactly "ModuleDependency2"
+    }
 }
