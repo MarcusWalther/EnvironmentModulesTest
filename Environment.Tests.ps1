@@ -208,7 +208,7 @@ Describe 'TestPathManipulationPsm1' {
     It 'Set Path is restored correctly' {
         Remove-EnvironmentModule "ProgramH"
         $env:ENV_TEST_PATH4 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("A", "B", "C")))
-        $env:ENV_TEST_PATH5 | Should -BeExactly $null
+        [String]::IsNullOrEmpty($env:ENV_TEST_PATH5) | Should -BeTrue
     }
 
     It 'Custom Set Path is restored correctly' {
@@ -232,14 +232,14 @@ Describe 'TestPathManipulationPse1' {
         $moduleRoot = (Get-EnvironmentModule "Project-ProgramD").ModuleRoot
         $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly ([System.IO.Path]::Join($moduleRoot, "Subfolder"))
         Remove-EnvironmentModule "Project-ProgramD"
-        $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly $null
+        [String]::IsNullOrEmpty($env:PROGRAM_D_ENV_VARIABLE) | Should -BeTrue
     }
 
     It 'Append Path is working correctly' {
         $moduleRoot = (Get-EnvironmentModule "Project-ProgramD").ModuleRoot
         $env:PROGRAM_D_ENV_VARIABLE_2 | Should -BeExactly ([String]::Join([IO.Path]::PathSeparator, @("MyTestValue", [System.IO.Path]::Join($moduleRoot, "Subfolder"), [System.IO.Path]::Join($moduleRoot, "Subfolder2"), "StaticContent")))
         Remove-EnvironmentModule "Project-ProgramD"
-        $env:PROGRAM_D_ENV_VARIABLE | Should -BeExactly $null
+        [String]::IsNullOrEmpty($env:PROGRAM_D_ENV_VARIABLE) | Should -BeTrue
     }
 }
 

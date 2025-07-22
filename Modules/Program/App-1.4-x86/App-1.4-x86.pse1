@@ -22,4 +22,11 @@
 
     # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
     Category = "Program"
+
+	VersionSpecifier = @(
+		@{
+			"Type" = "CONSTANT_VERSION"
+            "Value" = "1.4.4"
+		}
+	)
 }

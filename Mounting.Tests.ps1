@@ -68,7 +68,7 @@ Describe 'TestLoading' {
     }
 }
 
-Describe 'Test_DefaultModuleCreation' {
+Describe 'TestDefaultModuleCreation' {
 
     BeforeEach {
     }
@@ -112,6 +112,18 @@ Describe 'Test_DefaultModuleCreation' {
         $availableModules = Get-EnvironmentModule -ListAvailable | Select-Object -Expand FullName
         'Project' | Should -Not -BeIn $availableModules
     }
+
+    It 'Default Modules do not conflict with loaded modules' {
+        $Error.Clear()
+        Import-EnvironmentModule "ProgramG-1-x86" -Silent
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG-1-x86"
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG"
+        Get-Error | Should -Be $null
+        Import-EnvironmentModule "ProgramG-x86"
+        Get-Error | Should -Be $null
+    }
 }
 
 Describe 'TestLoadingDescriptionFile' {
@@ -135,7 +147,7 @@ Describe 'TestLoadingDescriptionFile' {
 }
 
 
-Describe 'TestLoading_ConflictingDependencies' {
+Describe 'TestLoadingConflictingDependencies' {
     BeforeEach {
     }
     AfterEach {
@@ -151,7 +163,7 @@ Describe 'TestLoading_ConflictingDependencies' {
     }
 }
 
-Describe 'TestLoading_CustomPath_Directory' {
+Describe 'TestLoadingCustomPathDirectory' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
@@ -172,7 +184,7 @@ Describe 'TestLoading_CustomPath_Directory' {
     }
 }
 
-Describe 'TestLoading_CustomPath_Directory_Temp' {
+Describe 'TestLoadingCustomPathDirectoryTemp' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
@@ -199,7 +211,7 @@ Describe 'TestLoading_CustomPath_Directory_Temp' {
     }
 }
 
-Describe 'TestLoading_CustomPath_Directory_Global' {
+Describe 'TestLoadingCustomPathDirectoryGlobal' {
     BeforeEach {
         $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB")
         Clear-EnvironmentModuleSearchPaths -IncludeGlobal -Force
@@ -226,7 +238,7 @@ Describe 'TestLoading_CustomPath_Directory_Global' {
     }
 }
 
-Describe 'TestLoading_CustomPath_Environment' {
+Describe 'TestLoadingCustomPathEnvironment' {
 
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
@@ -258,7 +270,7 @@ Describe 'TestLoading_CustomPath_Environment' {
     }
 }
 
-Describe 'TestLoading_Environment_Subpath' {
+Describe 'TestLoadingEnvironmentSubpath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramC")
@@ -275,7 +287,7 @@ Describe 'TestLoading_Environment_Subpath' {
     }
 }
 
-Describe 'TestLoading_InvalidCustomPath' {
+Describe 'TestLoadingInvalidCustomPath' {
     BeforeEach {
         Clear-EnvironmentModuleSearchPaths -Force
         $customDirectory = Join-Path $global:modulesRootFolder (Join-Path "Project" "Project-ProgramB_")
@@ -292,7 +304,7 @@ Describe 'TestLoading_InvalidCustomPath' {
     }
 }
 
-Describe 'TestLoading_AbstractModule' {
+Describe 'TestLoadingAbstractModule' {
     BeforeEach {
         Import-EnvironmentModule "Project-ProgramA" -Silent
     }
@@ -403,5 +415,24 @@ Describe 'TestSwitchDirectoryToModuleRoot' {
 
     It 'Directory was switched correctly' {
         Get-Location | Should -Be (Join-Path "$rootDirectory" "TestData")
+    }
+}
+
+Describe 'TestCustomVersionSpecifier' {
+
+    BeforeEach {
+    }
+    AfterEach {
+        Clear-EnvironmentModules -Force
+    }
+
+    It 'Regex version is handled correctly' {
+        $versionInfo = Get-InstalledEnvironmentModules -ModuleFullName "App-1.3-x64" -IncludeModulesWithoutSearchPath
+        $versionInfo.Version | Should -BeExactly "1.3.13"
+    }
+
+    It 'Constant version is handled correctly' {
+        $versionInfo = Get-InstalledEnvironmentModules -ModuleFullName "App-1.4-x86" -IncludeModulesWithoutSearchPath
+        $versionInfo.Version | Should -BeExactly "1.4.4"
     }
 }
