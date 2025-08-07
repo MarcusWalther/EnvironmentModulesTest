@@ -435,4 +435,9 @@ Describe 'TestCustomVersionSpecifier' {
         $versionInfo = Get-InstalledEnvironmentModules -ModuleFullName "App-1.4-x86" -IncludeModulesWithoutSearchPath
         $versionInfo.Version | Should -BeExactly "1.4.4"
     }
+
+    It 'Regex file name version is handled correctly' {
+        $versionInfo = Get-InstalledEnvironmentModules -ModuleFullName "ProgramZ-3_10-x64" -IncludeModulesWithoutSearchPath
+        $versionInfo.Version | Should -BeExactly "1.0.9"
+    }
 }

@@ -22,4 +22,12 @@
 
     # The category (default storage path) of the module (for instance "Project", "Abstract", "Program", "Development")
     Category = "Program"
+
+	VersionSpecifier = @(
+		@{
+			"Type" = "REGEX_FILE_NAME_VERSION"
+			"File" = "%{ModuleBase}/*.txt%"
+            "Value" = "FileName_(?<Version>.+)\.txt"
+		}
+	)
 }
