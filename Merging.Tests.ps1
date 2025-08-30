@@ -34,6 +34,7 @@ Describe 'TestMerge' {
 
         $result = Join-EnvironmentModuleInfos -Base $moduleA -Other $moduleB
         $result.Paths.Count | Should -Be 3
+        $result -is [EnvironmentModuleCore.EnvironmentModuleInfo] | Should -BeTrue
 
         $path = $result.Paths | Where-Object { $_.Variable -eq "MODULE_A_VAR" }
         $path.Values.Count | Should -Be 2
